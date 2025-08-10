@@ -4,8 +4,11 @@ import time
 from ultralytics import YOLO
 import supervision as sv
 
-TARGET_VIDEO_PATH = './data/video1_result.mp4'
-SOURCE_VIDEO_PATH = './data/video1.mp4'
+from src.export_csv import write_counts_to_csv
+
+#------- SETTINGS --------------------------------------------
+SOURCE_VIDEO_PATH = './data/videos/video1.mp4'
+INTERVAL_SECONDS = 2
 
 #-------- LOAD MODEL--------------------------------------------
 model = YOLO('./models/yolo11n.pt')
@@ -22,10 +25,11 @@ cv.namedWindow("frame", cv.WINDOW_NORMAL)  # Create a resizable window
 cv.resizeWindow("frame", 800, 600)         # Resize window to 800x600 pixels
 
 # ----- LOOP FRAMES ---------------------------------------------
+last_save_time = time.time()
 for frame in frames_generator:
 
     # detection------------------------------------------------
-    results = model(frame, classes=[2,5,7])[0]
+    results = model(frame, classes=[2,5,7], verbose=False)[0]
 
 
     # tracking--------------------------------------------------
@@ -47,6 +51,11 @@ for frame in frames_generator:
     cv.putText(frame, "in" + str(line_zone.in_count), (int(850), int(850)), cv.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0),4)
     cv.putText(frame, "out" + str(line_zone.out_count), (int(850), int(750)), cv.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0),4)
 
+    # save logs in csv -------------------------------
+    if time.time()-last_save_time >= INTERVAL_SECONDS:
+        print(line_zone.in_count)
+        write_counts_to_csv(line_zone.in_count, line_zone.out_count)
+        last_save_time = time.time()
 
     cv.imshow('frame', frame)    
     if cv.waitKey(1) == ord('q'):

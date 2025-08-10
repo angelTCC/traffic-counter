@@ -1,2 +1,3 @@
-data
+data/videos
 venv
+*__pycache__
